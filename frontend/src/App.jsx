@@ -6,122 +6,125 @@ import AIPrediction from "./pages/AIPrediction";
 import Analytics from "./pages/Analytics";
 import Reports from "./pages/Reports";
 
+import { LocationProvider } from "./LocationContext";
+
 function App() {
   return (
     <BrowserRouter>
-      <div className="app-layout">
+      <LocationProvider>
+        <div className="app-layout">
 
-        {/* =========================
-            SIDE NAVIGATION
-        ========================= */}
+          {/* =========================
+              SIDE NAVIGATION
+          ========================= */}
 
-        <aside className="side-navigation">
+          <aside className="side-navigation">
 
-          <div className="sidebar-brand">
-            <div className="sidebar-logo">🌍</div>
-
-            <div>
-              <h1>BRICSense</h1>
-              <p>Air Quality Intelligence</p>
-            </div>
-          </div>
-
-          <div className="sidebar-divider"></div>
-
-          <div className="sidebar-section-title">
-            MAIN MENU
-          </div>
-
-          <nav className="sidebar-links">
-
-            <NavLink to="/" end>
-              <span className="sidebar-icon">🏠</span>
-              <span>Dashboard</span>
-            </NavLink>
-
-            <NavLink to="/air-quality">
-              <span className="sidebar-icon">🌫️</span>
-              <span>Air Quality</span>
-            </NavLink>
-
-            <NavLink to="/ai-prediction">
-              <span className="sidebar-icon">🤖</span>
-              <span>AI & Prediction</span>
-            </NavLink>
-
-            <NavLink to="/analytics">
-              <span className="sidebar-icon">📊</span>
-              <span>Analytics</span>
-            </NavLink>
-
-            <NavLink to="/reports">
-              <span className="sidebar-icon">📢</span>
-              <span>Reports</span>
-            </NavLink>
-
-          </nav>
-
-          <div className="sidebar-bottom">
-
-            <div className="sidebar-divider"></div>
-
-            <div className="sidebar-system">
-              <span className="system-dot"></span>
+            <div className="sidebar-brand">
+              <div className="sidebar-logo">🌍</div>
 
               <div>
-                <strong>System Online</strong>
-                <small>All services running</small>
+                <h1>BRICSense</h1>
+                <p>Air Quality Intelligence</p>
               </div>
             </div>
 
-            <div className="sidebar-footer">
-              <span>BRICSense</span>
-              <small>Environmental Intelligence Platform</small>
+            <div className="sidebar-divider"></div>
+
+            <div className="sidebar-section-title">
+              MAIN MENU
             </div>
 
-          </div>
+            <nav className="sidebar-links">
 
-        </aside>
+              <NavLink to="/" end>
+                <span className="sidebar-icon">🏠</span>
+                <span>Dashboard</span>
+              </NavLink>
 
+              <NavLink to="/air-quality">
+                <span className="sidebar-icon">🌫️</span>
+                <span>Air Quality</span>
+              </NavLink>
 
-        {/* =========================
-            MAIN CONTENT
-        ========================= */}
+              <NavLink to="/ai-prediction">
+                <span className="sidebar-icon">🤖</span>
+                <span>AI & Prediction</span>
+              </NavLink>
 
-        <main className="main-content">
+              <NavLink to="/analytics">
+                <span className="sidebar-icon">📊</span>
+                <span>Analytics</span>
+              </NavLink>
 
-          <Routes>
+              <NavLink to="/reports">
+                <span className="sidebar-icon">📢</span>
+                <span>Reports</span>
+              </NavLink>
 
-            <Route
-              path="/"
-              element={<Dashboard />}
-            />
+            </nav>
 
-            <Route
-              path="/air-quality"
-              element={<AirQuality />}
-            />
+            <div className="sidebar-bottom">
 
-            <Route
-              path="/ai-prediction"
-              element={<AIPrediction />}
-            />
+              <div className="sidebar-divider"></div>
 
-            <Route
-              path="/analytics"
-              element={<Analytics />}
-            />
+              <div className="sidebar-system">
+                <span className="system-dot"></span>
 
-            <Route
-              path="/reports"
-              element={<Reports />}
-            />
+                <div>
+                  <strong>System Online</strong>
+                  <small>All services running</small>
+                </div>
+              </div>
 
-          </Routes>
+              <div className="sidebar-footer">
+                <span>BRICSense</span>
+                <small>Environmental Intelligence Platform</small>
+              </div>
 
-        </main>
+            </div>
 
-      </div>
+          </aside>
+
+          {/* =========================
+              MAIN CONTENT
+          ========================= */}
+
+          <main className="main-content">
+
+            <Routes>
+
+              <Route
+                path="/"
+                element={<Dashboard />}
+              />
+
+              <Route
+                path="/air-quality"
+                element={<AirQuality />}
+              />
+
+              <Route
+                path="/ai-prediction"
+                element={<AIPrediction />}
+              />
+
+              <Route
+                path="/analytics"
+                element={<Analytics />}
+              />
+
+              <Route
+                path="/reports"
+                element={<Reports />}
+              />
+
+            </Routes>
+
+          </main>
+
+        </div>
+      </LocationProvider>
     </BrowserRouter>
   );
 }

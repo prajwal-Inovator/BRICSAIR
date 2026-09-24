@@ -11,109 +11,257 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-function AdvancedAnalytics({ air }) {
+function AdvancedAnalytics({
+  air,
+  location,
+}) {
   const [reports, setReports] = useState([]);
-  const [loadingReports, setLoadingReports] = useState(true);
+  const [loadingReports, setLoadingReports] =
+    useState(true);
 
+  // ---------------------------------------------
+  // LOAD CITIZEN REPORTS
+  // ---------------------------------------------
   useEffect(() => {
-    fetch("https://bricsair.onrender.com/api/reports")
-      .then((response) => response.json())
-      .then((data) => {
+    async function loadReports() {
+      try {
+        const response = await fetch(
+          "https://bricsair.onrender.com/api/reports"
+        );
+
+        if (!response.ok) {
+          throw new Error(
+            "Reports unavailable"
+          );
+        }
+
+        const data = await response.json();
+
         setReports(data.reports || []);
+      } catch (error) {
+        console.error(
+          "Reports error:",
+          error
+        );
+
+        setReports([]);
+      } finally {
         setLoadingReports(false);
-      })
-      .catch(() => {
-        setLoadingReports(false);
-      });
+      }
+    }
+
+    loadReports();
   }, []);
 
-  // Get hotspot data
-  const hotspots = Array.isArray(air?.hotspots)
-    ? air.hotspots
-    : [];
+  // ---------------------------------------------
+  // PREPARE CURRENT CITY DATA
+  // ---------------------------------------------
 
-  // Convert values to numbers
-  const values = hotspots.map((spot) => ({
-    name: spot.name || "Location",
-    PM25: Number(spot.pm25) || 0,
-    PM10: Number(spot.pm10) || 0,
-  }));
+  let values = [];
 
-  // Average PM2.5
+  // First use hotspots
+  if (
+    Array.isArray(air?.hotspots) &&
+    air.hotspots.length > 0
+  ) {
+    values = air.hotspots
+      .map((spot) => ({
+        name:
+          spot.name ||
+          location?.name ||
+          "Location",
+
+        PM25: Number(spot.pm25),
+
+        PM10: Number(spot.pm10),
+      }))
+      .filter(
+        (item) =>
+          Number.isFinite(item.PM25) ||
+          Number.isFinite(item.PM10)
+      );
+  }
+
+  // ---------------------------------------------
+  // FALLBACK: CURRENT CITY VALUES
+  // ---------------------------------------------
+
+  if (values.length === 0 && air) {
+    const pm25 = Number(air.pm25);
+    const pm10 = Number(air.pm10);
+
+    if (
+      Number.isFinite(pm25) ||
+      Number.isFinite(pm10)
+    ) {
+      values = [
+        {
+          name:
+            location?.name ||
+            air.city ||
+            "Current Location",
+
+          PM25: Number.isFinite(pm25)
+            ? pm25
+            : 0,
+
+          PM10: Number.isFinite(pm10)
+            ? pm10
+            : 0,
+        },
+      ];
+    }
+  }
+
+  // ---------------------------------------------
+  // CALCULATE AVERAGES
+  // ---------------------------------------------
+
   const averagePM25 =
     values.length > 0
-      ? values.reduce((sum, item) => sum + item.PM25, 0) /
-        values.length
+      ? values.reduce(
+          (sum, item) =>
+            sum + item.PM25,
+          0
+        ) / values.length
       : 0;
 
-  // Average PM10
   const averagePM10 =
     values.length > 0
-      ? values.reduce((sum, item) => sum + item.PM10, 0) /
-        values.length
+      ? values.reduce(
+          (sum, item) =>
+            sum + item.PM10,
+          0
+        ) / values.length
       : 0;
 
-  // Highest hotspot
+  // ---------------------------------------------
+  // HIGHEST HOTSPOT
+  // ---------------------------------------------
+
   const highestHotspot =
     values.length > 0
-      ? values.reduce((highest, item) =>
-          item.PM25 > highest.PM25 ? item : highest
+      ? values.reduce(
+          (highest, item) =>
+            item.PM25 >
+            highest.PM25
+              ? item
+              : highest
         )
       : null;
 
-  // Lowest hotspot
+  // ---------------------------------------------
+  // LOWEST HOTSPOT
+  // ---------------------------------------------
+
   const lowestHotspot =
     values.length > 0
-      ? values.reduce((lowest, item) =>
-          item.PM25 < lowest.PM25 ? item : lowest
+      ? values.reduce(
+          (lowest, item) =>
+            item.PM25 <
+            lowest.PM25
+              ? item
+              : lowest
         )
       : null;
 
   return (
     <section className="analytics-section">
 
+      {/* ========================================= */}
+      {/* HEADER */}
+      {/* ========================================= */}
+
       <div className="section-heading">
-        <h2>📊 Advanced Analytics</h2>
-        <p>
-          Analyze pollution levels, hotspots, and citizen reports.
-        </p>
+
+        <div>
+          <h2>
+            📊 Pollution Analytics
+          </h2>
+
+          <p>
+            Current pollution analysis for{" "}
+            <strong>
+              {location?.name ||
+                air?.city ||
+                "selected location"}
+            </strong>
+            .
+          </p>
+        </div>
+
       </div>
+
+      {/* ========================================= */}
+      {/* ANALYTICS CARDS */}
+      {/* ========================================= */}
 
       <div className="analytics-cards">
 
+        {/* AVERAGE PM2.5 */}
+
         <div className="analytics-card">
-          <span className="analytics-icon">🌫️</span>
+
+          <span className="analytics-icon">
+            🌫️
+          </span>
 
           <div>
-            <h3>Average PM2.5</h3>
+            <h3>
+              Average PM2.5
+            </h3>
 
             <strong>
-              {averagePM25.toFixed(1)}
+              {values.length > 0
+                ? averagePM25.toFixed(1)
+                : "—"}
             </strong>
 
-            <small>µg/m³</small>
+            <small>
+              µg/m³
+            </small>
           </div>
+
         </div>
 
+        {/* AVERAGE PM10 */}
+
         <div className="analytics-card">
-          <span className="analytics-icon">💨</span>
+
+          <span className="analytics-icon">
+            💨
+          </span>
 
           <div>
-            <h3>Average PM10</h3>
+            <h3>
+              Average PM10
+            </h3>
 
             <strong>
-              {averagePM10.toFixed(1)}
+              {values.length > 0
+                ? averagePM10.toFixed(1)
+                : "—"}
             </strong>
 
-            <small>µg/m³</small>
+            <small>
+              µg/m³
+            </small>
           </div>
+
         </div>
 
+        {/* HIGHEST */}
+
         <div className="analytics-card">
-          <span className="analytics-icon">🔴</span>
+
+          <span className="analytics-icon">
+            🔴
+          </span>
 
           <div>
-            <h3>Highest Hotspot</h3>
+            <h3>
+              Highest PM2.5
+            </h3>
 
             <strong>
               {highestHotspot
@@ -127,13 +275,21 @@ function AdvancedAnalytics({ air }) {
                 : "No data"}
             </small>
           </div>
+
         </div>
 
+        {/* LOWEST */}
+
         <div className="analytics-card">
-          <span className="analytics-icon">🟢</span>
+
+          <span className="analytics-icon">
+            🟢
+          </span>
 
           <div>
-            <h3>Lowest Hotspot</h3>
+            <h3>
+              Lowest PM2.5
+            </h3>
 
             <strong>
               {lowestHotspot
@@ -147,13 +303,21 @@ function AdvancedAnalytics({ air }) {
                 : "No data"}
             </small>
           </div>
+
         </div>
 
+        {/* REPORTS */}
+
         <div className="analytics-card">
-          <span className="analytics-icon">📢</span>
+
+          <span className="analytics-icon">
+            📢
+          </span>
 
           <div>
-            <h3>Citizen Reports</h3>
+            <h3>
+              Citizen Reports
+            </h3>
 
             <strong>
               {loadingReports
@@ -165,15 +329,35 @@ function AdvancedAnalytics({ air }) {
               Submitted reports
             </small>
           </div>
+
         </div>
 
       </div>
 
+      {/* ========================================= */}
+      {/* CHART */}
+      {/* ========================================= */}
+
       <div className="analytics-chart-card">
 
-        <h3>
-          Pollution Comparison by Location
-        </h3>
+        <div className="analytics-chart-header">
+
+          <div>
+            <h3>
+              Pollution Comparison
+            </h3>
+
+            <p>
+              PM2.5 and PM10 levels for{" "}
+              <strong>
+                {location?.name ||
+                  air?.city ||
+                  "selected location"}
+              </strong>
+            </p>
+          </div>
+
+        </div>
 
         {values.length > 0 ? (
 
@@ -181,15 +365,31 @@ function AdvancedAnalytics({ air }) {
             width="100%"
             height={350}
           >
-            <BarChart data={values}>
+            <BarChart
+              data={values}
+              margin={{
+                top: 20,
+                right: 30,
+                left: 10,
+                bottom: 40,
+              }}
+            >
 
               <CartesianGrid
                 strokeDasharray="3 3"
               />
 
-              <XAxis dataKey="name" />
+              <XAxis
+                dataKey="name"
+              />
 
-              <YAxis />
+              <YAxis
+                label={{
+                  value: "µg/m³",
+                  angle: -90,
+                  position: "insideLeft",
+                }}
+              />
 
               <Tooltip />
 
@@ -210,9 +410,22 @@ function AdvancedAnalytics({ air }) {
 
         ) : (
 
-          <p className="analytics-empty">
-            Pollution data is not available yet.
-          </p>
+          <div className="analytics-empty">
+
+            <div>
+              📊
+            </div>
+
+            <h3>
+              Pollution data unavailable
+            </h3>
+
+            <p>
+              Select a city or search for a
+              location to load pollution data.
+            </p>
+
+          </div>
 
         )}
 

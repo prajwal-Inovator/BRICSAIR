@@ -1,7 +1,6 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Map from "../Map";
-
-const API_BASE = "https://bricsair.onrender.com";
+import { useLocationData } from "../LocationContext";
 
 function getStatus(pm25) {
   if (pm25 <= 12) return "Good";
@@ -12,44 +11,45 @@ function getStatus(pm25) {
 }
 
 function AirQuality() {
-  const [air, setAir] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const {
+    location,
+    air,
+    setAir,
+    weather,
+  } = useLocationData();
+
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
 
-  async function loadAirQuality() {
+  async function handleRefresh() {
+    if (!location?.latitude || !location?.longitude) {
+      return;
+    }
+
     try {
+      setRefreshing(true);
       setError("");
 
       const response = await fetch(
-        `${API_BASE}/api/air-quality?city=bengaluru`
+        `https://bricsair.onrender.com/api/air-quality-location?lat=${location.latitude}&lon=${location.longitude}`
       );
 
       if (!response.ok) {
-        throw new Error("Unable to load air-quality data");
+        throw new Error("Unable to refresh air-quality data");
       }
 
       const data = await response.json();
 
-      console.log("AIR QUALITY DATA:", data);
-
-      setAir(data);
-    } catch (error) {
-      console.error("Air quality error:", error);
-      setError("Unable to load air-quality data.");
+      setAir({
+        ...data,
+        city: location.name,
+      });
+    } catch (err) {
+      console.error("Air quality refresh error:", err);
+      setError("Unable to refresh air-quality data.");
     } finally {
-      setLoading(false);
       setRefreshing(false);
     }
-  }
-
-  useEffect(() => {
-    loadAirQuality();
-  }, []);
-
-  function handleRefresh() {
-    setRefreshing(true);
-    loadAirQuality();
   }
 
   const hotspots = air?.hotspots || [];
@@ -65,12 +65,15 @@ function AirQuality() {
 
   const status = getStatus(pm25);
 
-  if (loading) {
+  if (!air) {
     return (
       <div className="page-container">
         <div className="air-loading">
           <h1>🌫️ Air Quality Monitoring</h1>
-          <p>Loading live air-quality information...</p>
+          <p>
+            No air-quality data available for the selected location.
+            Please return to Dashboard and select a location.
+          </p>
         </div>
       </div>
     );
@@ -83,6 +86,7 @@ function AirQuality() {
       <div className="air-header">
         <div>
           <h1>🌫️ Air Quality Monitoring</h1>
+
           <p>
             Real-time pollution monitoring and environmental conditions.
           </p>
@@ -106,15 +110,19 @@ function AirQuality() {
 
       {/* LOCATION */}
       <section className="air-location-card">
+
         <div>
           <span>📍 CURRENT MONITORING LOCATION</span>
 
           <h2>
-            {air?.city || "Bengaluru"}
+            {location?.name || air?.city || "Selected Location"}
           </h2>
 
           <p>
-            India • Live environmental monitoring
+            {location?.state
+              ? `${location.state}, ${location.country}`
+              : location?.country || "India"}
+            {" • Live environmental monitoring"}
           </p>
         </div>
 
@@ -122,12 +130,14 @@ function AirQuality() {
           <span className="live-dot"></span>
           LIVE DATA
         </div>
+
       </section>
 
       {/* MAIN STATUS */}
       <section className="air-status-card">
 
         <div className="status-main">
+
           <span>Current Air Quality</span>
 
           <h2>{status}</h2>
@@ -135,21 +145,38 @@ function AirQuality() {
           <p>
             Based on current PM2.5 concentration
           </p>
+
         </div>
 
         <div className="main-pm-value">
+
           <span>PM2.5</span>
-          <strong>{pm25.toFixed(1)}</strong>
-          <small>µg/m³</small>
+
+          <strong>
+            {pm25.toFixed(1)}
+          </strong>
+
+          <small>
+            µg/m³
+          </small>
+
         </div>
 
       </section>
 
       {/* QUICK POLLUTION CARDS */}
       <section>
+
         <div className="air-section-title">
-          <span>LIVE POLLUTION LEVELS</span>
-          <h2>Current Pollutants</h2>
+
+          <span>
+            LIVE POLLUTION LEVELS
+          </span>
+
+          <h2>
+            Current Pollutants
+          </h2>
+
         </div>
 
         <div className="pollutant-cards">
@@ -191,29 +218,40 @@ function AirQuality() {
           </div>
 
         </div>
+
       </section>
 
       {/* MAP */}
       <section className="air-feature">
 
         <div className="air-section-title">
-          <span>GEOGRAPHICAL MONITORING</span>
-          <h2>🗺️ Live Pollution Map</h2>
+
+          <span>
+            GEOGRAPHICAL MONITORING
+          </span>
+
+          <h2>
+            🗺️ Live Pollution Map
+          </h2>
+
           <p>
             View pollution levels across monitoring locations.
           </p>
+
         </div>
 
         <div className="air-map-wrapper">
+
           <Map
             latitude={
-              Number(air?.latitude) || 12.9716
+              Number(location?.latitude) || 12.9716
             }
             longitude={
-              Number(air?.longitude) || 77.5946
+              Number(location?.longitude) || 77.5946
             }
             hotspots={hotspots}
           />
+
         </div>
 
       </section>
@@ -222,19 +260,32 @@ function AirQuality() {
       <section className="air-feature">
 
         <div className="air-section-title">
-          <span>MONITORING NETWORK</span>
-          <h2>📍 Monitoring Locations</h2>
+
+          <span>
+            MONITORING NETWORK
+          </span>
+
+          <h2>
+            📍 Monitoring Locations
+          </h2>
+
           <p>
             Pollution readings from monitored locations.
           </p>
+
         </div>
 
         <div className="monitoring-list">
 
           {hotspots.length > 0 ? (
+
             hotspots.map((spot, index) => {
-              const spotPM25 = Number(spot.pm25) || 0;
-              const spotPM10 = Number(spot.pm10) || 0;
+
+              const spotPM25 =
+                Number(spot.pm25) || 0;
+
+              const spotPM10 =
+                Number(spot.pm10) || 0;
 
               return (
                 <div
@@ -247,29 +298,44 @@ function AirQuality() {
                   </div>
 
                   <div className="monitoring-info">
+
                     <h3>
-                      {spot.name || `Monitoring Location ${index + 1}`}
+                      {spot.name ||
+                        `Monitoring Location ${index + 1}`}
                     </h3>
 
                     <p>
                       Pollution monitoring station
                     </p>
+
                   </div>
 
                   <div className="monitoring-value">
+
                     <span>PM2.5</span>
+
                     <strong>
                       {spotPM25.toFixed(1)}
                     </strong>
-                    <small>µg/m³</small>
+
+                    <small>
+                      µg/m³
+                    </small>
+
                   </div>
 
                   <div className="monitoring-value">
+
                     <span>PM10</span>
+
                     <strong>
                       {spotPM10.toFixed(1)}
                     </strong>
-                    <small>µg/m³</small>
+
+                    <small>
+                      µg/m³
+                    </small>
+
                   </div>
 
                   <div className="monitoring-status">
@@ -279,8 +345,13 @@ function AirQuality() {
                 </div>
               );
             })
+
           ) : (
-            <p>No monitoring locations available.</p>
+
+            <p>
+              No monitoring locations available.
+            </p>
+
           )}
 
         </div>
@@ -291,27 +362,45 @@ function AirQuality() {
       <section className="air-info-grid">
 
         <div className="air-info-card">
+
           <span>📡 DATA SOURCE</span>
-          <strong>OpenWeather</strong>
+
+          <strong>
+            OpenWeather
+          </strong>
+
           <p>
             Live environmental and air-pollution data.
           </p>
+
         </div>
 
         <div className="air-info-card">
+
           <span>🔄 UPDATE</span>
-          <strong>Live Refresh</strong>
+
+          <strong>
+            Live Refresh
+          </strong>
+
           <p>
             Use refresh to retrieve the latest readings.
           </p>
+
         </div>
 
         <div className="air-info-card">
+
           <span>📊 ANALYTICS</span>
-          <strong>Advanced Analysis</strong>
+
+          <strong>
+            Advanced Analysis
+          </strong>
+
           <p>
             Detailed pollution charts are available in Analytics.
           </p>
+
         </div>
 
       </section>

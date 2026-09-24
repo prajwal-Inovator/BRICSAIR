@@ -3065,3 +3065,425 @@ textarea {
     padding-bottom: 70px;
   }
 }
+/* =========================================================
+   AI PREDICTION PAGE
+   ========================================================= */
+
+.ai-page {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 30px 36px 60px;
+}
+
+/* HEADER */
+
+.ai-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 30px;
+  margin-bottom: 28px;
+}
+
+.ai-eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  opacity: 0.65;
+  margin-bottom: 8px;
+}
+
+.ai-page-header h1 {
+  margin: 0;
+  font-size: 34px;
+  font-weight: 800;
+  letter-spacing: -0.8px;
+}
+
+.ai-page-header p {
+  margin: 9px 0 0;
+  max-width: 650px;
+  opacity: 0.68;
+  line-height: 1.6;
+}
+
+/* LOCATION */
+
+.ai-location-badge {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 190px;
+  padding: 13px 17px;
+  border: 1px solid rgba(128, 128, 128, 0.18);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.ai-location-badge > span {
+  font-size: 22px;
+}
+
+.ai-location-badge small {
+  display: block;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  opacity: 0.55;
+}
+
+.ai-location-badge strong {
+  display: block;
+  margin-top: 3px;
+  font-size: 14px;
+}
+
+/* MAIN PREDICTION */
+
+.ai-prediction-card {
+  padding: 28px;
+  border-radius: 20px;
+  border: 1px solid rgba(128, 128, 128, 0.18);
+  background: rgba(255, 255, 255, 0.045);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.06);
+}
+
+.ai-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  margin-bottom: 26px;
+}
+
+.ai-card-label {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.4px;
+  opacity: 0.55;
+}
+
+.ai-card-top h2 {
+  margin: 7px 0 6px;
+  font-size: 23px;
+}
+
+.ai-card-top p {
+  margin: 0;
+  font-size: 13px;
+  opacity: 0.62;
+}
+
+.ai-model-badge {
+  padding: 8px 13px;
+  border-radius: 30px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  background: rgba(40, 180, 100, 0.12);
+  white-space: nowrap;
+}
+
+/* PREDICTION GRID */
+
+.ai-prediction-grid {
+  display: grid;
+  grid-template-columns: 1fr 45px 1fr 1fr;
+  gap: 14px;
+  align-items: stretch;
+}
+
+.ai-metric-card,
+.ai-status-card {
+  min-height: 155px;
+  padding: 22px;
+  border-radius: 16px;
+  border: 1px solid rgba(128, 128, 128, 0.16);
+  background: rgba(128, 128, 128, 0.055);
+}
+
+.ai-predicted-card {
+  border: 1px solid rgba(60, 150, 255, 0.28);
+  background: rgba(60, 150, 255, 0.07);
+}
+
+.ai-metric-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  opacity: 0.55;
+}
+
+.ai-metric-value {
+  display: inline-block;
+  margin-top: 15px;
+  font-size: 42px;
+  line-height: 1;
+  font-weight: 800;
+}
+
+.ai-metric-unit {
+  margin-left: 7px;
+  font-size: 12px;
+  opacity: 0.55;
+}
+
+.ai-metric-card p,
+.ai-status-card p {
+  margin: 14px 0 0;
+  font-size: 11px;
+  opacity: 0.52;
+}
+
+.ai-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 27px;
+  opacity: 0.4;
+}
+
+.ai-status-value {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 20px;
+  font-size: 23px;
+  font-weight: 800;
+}
+
+.ai-status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* LOADING */
+
+.ai-loading {
+  min-height: 150px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+}
+
+.ai-loading p {
+  margin: 0;
+  font-size: 13px;
+  opacity: 0.6;
+}
+
+.ai-spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid rgba(128, 128, 128, 0.2);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: ai-spin 0.8s linear infinite;
+}
+
+@keyframes ai-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.ai-error {
+  padding: 18px;
+  border-radius: 12px;
+  background: rgba(220, 70, 70, 0.08);
+  font-size: 13px;
+}
+
+.ai-empty {
+  padding: 35px;
+  text-align: center;
+  opacity: 0.55;
+}
+
+/* SECTIONS */
+
+.ai-section {
+  margin-top: 28px;
+}
+
+.ai-section-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 20px;
+  margin-bottom: 15px;
+}
+
+.ai-section-title span {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.3px;
+  opacity: 0.5;
+}
+
+.ai-section-title h2 {
+  margin: 5px 0 0;
+  font-size: 20px;
+}
+
+.ai-section-title p {
+  margin: 0;
+  font-size: 12px;
+  opacity: 0.55;
+  text-align: right;
+}
+
+/* MODEL GRID */
+
+.ai-model-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+.ai-info-card {
+  padding: 20px;
+  border-radius: 15px;
+  border: 1px solid rgba(128, 128, 128, 0.16);
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.ai-info-card span {
+  display: block;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  opacity: 0.5;
+}
+
+.ai-info-card strong {
+  display: block;
+  margin-top: 10px;
+  font-size: 17px;
+}
+
+.ai-info-card small {
+  display: block;
+  margin-top: 6px;
+  font-size: 10px;
+  opacity: 0.45;
+}
+
+/* FORECAST */
+
+.ai-forecast-card {
+  padding: 22px;
+  min-height: 330px;
+  border-radius: 17px;
+  border: 1px solid rgba(128, 128, 128, 0.16);
+  background: rgba(255, 255, 255, 0.035);
+}
+
+/* IMAGE ANALYSIS */
+
+.ai-image-card {
+  padding: 25px;
+  border-radius: 17px;
+  border: 1px solid rgba(128, 128, 128, 0.16);
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.ai-image-intro {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.ai-image-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 13px;
+  background: rgba(120, 100, 255, 0.1);
+  font-size: 22px;
+}
+
+.ai-image-intro h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.ai-image-intro p {
+  margin: 5px 0 0;
+  font-size: 12px;
+  opacity: 0.55;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 1100px) {
+  .ai-prediction-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .ai-arrow {
+    display: none;
+  }
+
+  .ai-model-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .ai-page {
+    padding: 22px 16px 45px;
+  }
+
+  .ai-page-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ai-page-header h1 {
+    font-size: 28px;
+  }
+
+  .ai-location-badge {
+    width: fit-content;
+  }
+
+  .ai-prediction-card {
+    padding: 19px;
+  }
+
+  .ai-card-top {
+    flex-direction: column;
+  }
+
+  .ai-prediction-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ai-model-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ai-section-title {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .ai-section-title p {
+    text-align: left;
+  }
+
+  .ai-metric-value {
+    font-size: 36px;
+  }
+}
