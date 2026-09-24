@@ -49,7 +49,7 @@ const apiLimiter = rateLimit({
     error: "Too many requests. Please try again later.",
   },
 });
-
+app.set("trust proxy", 1);
 app.use("/api", apiLimiter);
 // =====================================================
 // IMAGE UPLOAD CONFIGURATION
