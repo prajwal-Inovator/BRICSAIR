@@ -35,7 +35,7 @@ function PollutionImageAnalysis() {
       formData.append("image", image);
 
       const response = await fetch(
-        "http://localhost:5000/api/analyze-image",
+        "https://bricsair.onrender.com/api/analyze-image",
         {
           method: "POST",
           body: formData,

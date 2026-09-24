@@ -8,7 +8,7 @@ function AIPrediction() {
 
   useEffect(() => {
     fetch(
-      "http://localhost:5000/api/forecast?lat=12.9716&lon=77.5946"
+      "https://bricsair.onrender.com/api/forecast?lat=12.9716&lon=77.5946"
     )
       .then((response) => response.json())
       .then((data) => {

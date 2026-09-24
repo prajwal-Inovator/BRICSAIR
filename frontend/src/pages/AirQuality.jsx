@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import Map from "../Map";
 
-const API_BASE = "http://localhost:5000";
+const API_BASE = "https://bricsair.onrender.com";
 
 function getStatus(pm25) {
   if (pm25 <= 12) return "Good";

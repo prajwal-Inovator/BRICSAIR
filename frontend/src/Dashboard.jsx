@@ -8,7 +8,7 @@ import AdvancedAnalytics from "./AdvancedAnalytics";
 import PollutionImageAnalysis from "./PollutionImageAnalysis";
 import "./App.css";
 
-const API_BASE = "http://localhost:5000";
+const API_BASE = "https://bricsair.onrender.com";
 
 const BRICS_CITIES = [
   {

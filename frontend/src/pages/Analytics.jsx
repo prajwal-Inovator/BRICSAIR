@@ -6,7 +6,7 @@ function Analytics() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/air-quality?city=bengaluru")
+    fetch("https://bricsair.onrender.com/api/air-quality?city=bengaluru")
       .then((response) => response.json())
       .then((data) => {
         console.log("ANALYTICS DATA:", data);

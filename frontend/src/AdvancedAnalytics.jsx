@@ -16,7 +16,7 @@ function AdvancedAnalytics({ air }) {
   const [loadingReports, setLoadingReports] = useState(true);
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/reports")
+    fetch("https://bricsair.onrender.com/api/reports")
       .then((response) => response.json())
       .then((data) => {
         setReports(data.reports || []);

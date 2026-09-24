@@ -54,7 +54,7 @@ function CitizenReport() {
 
     try {
       const response = await fetch(
-        "http://localhost:5000/api/reports",
+        "https://bricsair.onrender.com/api/reports",
         {
           method: "POST",
           headers: {
