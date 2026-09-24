@@ -2,6 +2,7 @@ const express = require("express");
 const rateLimit = require("express-rate-limit");
 const cors = require("cors");
 const dotenv = require("dotenv");
+const pool = require("./database");
 const https = require("https");
 const { spawn } = require("child_process");
 const path = require("path");
@@ -11,6 +12,40 @@ const { GoogleGenAI } = require("@google/genai");
 dotenv.config();
 
 const app = express();
+async function initializeDatabase() {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS pollution_reports (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) DEFAULT 'Anonymous',
+        location VARCHAR(255) NOT NULL,
+        pollution_type VARCHAR(100),
+        description TEXT,
+        latitude DOUBLE PRECISION,
+        longitude DOUBLE PRECISION,
+        image VARCHAR(500),
+        status VARCHAR(50) DEFAULT 'Submitted',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    await pool.query(`
+      ALTER TABLE pollution_reports
+      ADD COLUMN IF NOT EXISTS name VARCHAR(255) DEFAULT 'Anonymous';
+    `);
+
+    await pool.query(`
+      ALTER TABLE pollution_reports
+      ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'Submitted';
+    `);
+
+    console.log("PostgreSQL database initialized successfully.");
+  } catch (error) {
+    console.error("PostgreSQL initialization failed:", error);
+  }
+}
+
+initializeDatabase();
 const PORT = 5000;
 
 const allowedOrigins = (
@@ -1414,15 +1449,35 @@ Confidence:
 
 const citizenReports = [];
 
-app.get("/api/reports", (req, res) => {
-  res.json({
-    success: true,
-    count: citizenReports.length,
-    reports: citizenReports,
-  });
+app.get("/api/reports", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT
+        id,
+        location,
+        pollution_type,
+        description,
+        latitude,
+        longitude,
+        created_at
+      FROM pollution_reports
+      ORDER BY created_at DESC;
+    `);
+
+    res.json({
+      success: true,
+      reports: result.rows,
+    });
+  } catch (error) {
+    console.error("Get reports database error:", error);
+
+    res.status(500).json({
+      error: "Unable to load pollution reports.",
+    });
+  }
 });
 
-app.post("/api/reports", (req, res) => {
+app.post("/api/reports", async (req, res) => {
   try {
     const {
       name,
@@ -1435,30 +1490,82 @@ app.post("/api/reports", (req, res) => {
 
     if (!pollutionType || !description) {
       return res.status(400).json({
-        error:
-          "Pollution type and description are required.",
+        error: "Pollution type and description are required.",
       });
     }
 
-    const report = {
-      id: Date.now(),
-      name: name || "Anonymous",
-      pollutionType,
-      description,
-      location: location || "Unknown location",
-      latitude:
-        latitude !== undefined
-          ? Number(latitude)
-          : null,
-      longitude:
-        longitude !== undefined
-          ? Number(longitude)
-          : null,
-      status: "Submitted",
-      createdAt: new Date().toISOString(),
-    };
+    const reportName = name || "Anonymous";
+    const reportLocation = location || "Unknown location";
+    const reportStatus = "Submitted";
 
-    citizenReports.unshift(report);
+    const lat =
+      latitude !== undefined && latitude !== ""
+        ? Number(latitude)
+        : null;
+
+    const lon =
+      longitude !== undefined && longitude !== ""
+        ? Number(longitude)
+        : null;
+
+    if (
+      (lat !== null && !Number.isFinite(lat)) ||
+      (lon !== null && !Number.isFinite(lon))
+    ) {
+      return res.status(400).json({
+        error: "Invalid latitude or longitude.",
+      });
+    }
+
+    const result = await pool.query(
+      `
+      INSERT INTO pollution_reports
+        (
+          name,
+          location,
+          pollution_type,
+          description,
+          latitude,
+          longitude,
+          status
+        )
+      VALUES
+        ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING
+        id,
+        name,
+        location,
+        pollution_type,
+        description,
+        latitude,
+        longitude,
+        status,
+        created_at;
+      `,
+      [
+        reportName,
+        reportLocation,
+        pollutionType,
+        description,
+        lat,
+        lon,
+        reportStatus,
+      ]
+    );
+
+    const savedReport = result.rows[0];
+
+    const report = {
+      id: savedReport.id,
+      name: savedReport.name,
+      pollutionType: savedReport.pollution_type,
+      description: savedReport.description,
+      location: savedReport.location,
+      latitude: savedReport.latitude,
+      longitude: savedReport.longitude,
+      status: savedReport.status,
+      createdAt: savedReport.created_at,
+    };
 
     res.status(201).json({
       success: true,
@@ -1466,17 +1573,88 @@ app.post("/api/reports", (req, res) => {
       report,
     });
   } catch (error) {
-    console.error(
-      "Citizen report error:",
-      error
-    );
+    console.error("Citizen report database error:", error);
 
     res.status(500).json({
-      error: "Unable to submit pollution report.",
+      error: "Unable to save pollution report.",
     });
   }
 });
+app.get("/api/reverse-geocode", async (req, res) => {
+  try {
+    const lat = Number(req.query.lat);
+    const lon = Number(req.query.lon);
 
+    if (
+      !Number.isFinite(lat) ||
+      !Number.isFinite(lon) ||
+      !isValidLatitude(lat) ||
+      !isValidLongitude(lon)
+    ) {
+      return res.status(400).json({
+        error: "Invalid latitude or longitude.",
+      });
+    }
+
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`,
+      {
+        headers: {
+          "User-Agent": "BRICSAIR/1.0 environmental monitoring application",
+          Accept: "application/json",
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(
+        `Reverse geocoding returned ${response.status}`
+      );
+    }
+
+    const data = await response.json();
+
+    const address = data.address || {};
+
+    const place =
+  address.quarter ||
+  address.suburb ||
+  address.neighbourhood ||
+  address.city ||
+  address.town ||
+  address.village ||
+  address.municipality ||
+  address.county ||
+  address.state_district ||
+  "";
+
+    let location = [place, state, country]
+      .filter(Boolean)
+      .join(", ");
+
+    if (!location) {
+      location =
+        data.display_name ||
+        `${lat}, ${lon}`;
+    }
+
+    res.json({
+      success: true,
+      location,
+      latitude: lat,
+      longitude: lon,
+    });
+  } catch (error) {
+    console.error("Reverse geocoding error:", error);
+
+    res.json({
+      success: false,
+      location: "",
+      latitude: Number(req.query.lat),
+      longitude: Number(req.query.lon),
+    });
+  }
+});
 // =====================================================
 // START SERVER
 // =====================================================
