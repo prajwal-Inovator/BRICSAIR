@@ -1,4 +1,5 @@
 const express = require("express");
+const rateLimit = require("express-rate-limit");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const https = require("https");
@@ -12,8 +13,44 @@ dotenv.config();
 const app = express();
 const PORT = 5000;
 
-app.use(cors());
-app.use(express.json());
+const allowedOrigins = (
+  process.env.CORS_ORIGINS || "http://localhost:5173"
+)
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow requests without an Origin header
+      // such as server-to-server requests.
+      if (!origin) {
+        return callback(null, true);
+      }
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error("CORS origin not allowed"));
+    },
+    methods: ["GET", "POST"],
+    credentials: false,
+  })
+);
+app.use(express.json({ limit: "1mb" }));
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    error: "Too many requests. Please try again later.",
+  },
+});
+
+app.use("/api", apiLimiter);
 // =====================================================
 // IMAGE UPLOAD CONFIGURATION
 // =====================================================
@@ -45,6 +82,20 @@ const upload = multer({
 
 const API_KEY = process.env.OPENWEATHER_API_KEY;
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+if (!API_KEY) {
+  console.warn("WARNING: OPENWEATHER_API_KEY is not configured.");
+}
+
+if (!GEMINI_API_KEY) {
+  console.warn("WARNING: GEMINI_API_KEY is not configured.");
+}
+function isValidLatitude(value) {
+  return Number.isFinite(value) && value >= -90 && value <= 90;
+}
+
+function isValidLongitude(value) {
+  return Number.isFinite(value) && value >= -180 && value <= 180;
+}
 
 // =====================================================
 // GEMINI AI CLIENT
@@ -288,7 +339,7 @@ Instructions:
 
     res.status(500).json({
       error: "Gemini AI request failed",
-      details: error.message,
+      
     });
   }
 });
@@ -357,7 +408,7 @@ app.get("/api/search-location", async (req, res) => {
 
     res.status(500).json({
       error: "Unable to search location",
-      details: error.message,
+      
     });
   }
 });
@@ -372,9 +423,9 @@ app.get("/api/air-quality-location", async (req, res) => {
     const longitude = Number(req.query.lon);
 
     if (
-      !Number.isFinite(latitude) ||
-      !Number.isFinite(longitude)
-    ) {
+  !isValidLatitude(latitude) ||
+  !isValidLongitude(longitude)
+) {
       return res.status(400).json({
         error: "Valid latitude and longitude are required",
       });
@@ -433,7 +484,7 @@ app.get("/api/air-quality-location", async (req, res) => {
 
     res.status(500).json({
       error: "Unable to retrieve air-quality data",
-      details: error.message,
+      
     });
   }
 });
@@ -496,7 +547,7 @@ app.get("/api/weather", async (req, res) => {
 
     res.status(500).json({
       error: "Unable to retrieve weather data",
-      details: error.message,
+      
     });
   }
 });
@@ -774,7 +825,7 @@ app.get("/api/air-quality", async (req, res) => {
     res.status(500).json({
       error:
         "Unable to retrieve air-quality data",
-      details: error.message,
+      
     });
   }
 });
@@ -872,7 +923,7 @@ app.get("/api/prediction", async (req, res) => {
       if (!res.headersSent) {
         res.status(500).json({
           error: "Unable to start Python prediction",
-          details: error.message,
+          
         });
       }
     });
@@ -924,7 +975,7 @@ app.get("/api/prediction", async (req, res) => {
     res.status(500).json({
       error:
         "Unable to generate prediction",
-      details: error.message,
+      
     });
   }
 });
@@ -1089,7 +1140,7 @@ app.get(
       res.status(500).json({
         error:
           "Unable to load location dashboard",
-        details: error.message,
+        
       });
     }
   }
@@ -1239,7 +1290,7 @@ app.get("/api/forecast", async (req, res) => {
     res.status(500).json({
       error:
         "Unable to retrieve pollution forecast",
-      details: error.message,
+      
     });
   }
 });
@@ -1352,7 +1403,7 @@ Confidence:
       res.status(500).json({
         error:
           "Unable to analyze the image.",
-        details: error.message,
+        
       });
     }
   }
