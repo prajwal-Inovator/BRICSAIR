@@ -1,4 +1,5 @@
 // AI assistant endpoint updated
+// AI assistant endpoint updated
 import { useEffect, useState } from "react";
 
 import Map from "./Map";
