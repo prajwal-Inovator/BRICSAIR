@@ -20,7 +20,18 @@ function AIPrediction() {
   const [predictionError, setPredictionError] =
     useState("");
 
-  const city = selectedCity || "bengaluru";
+ const cityKeyMap = {
+  Bengaluru: "bengaluru",
+  "São Paulo": "sao-paulo",
+  Moscow: "moscow",
+  Beijing: "beijing",
+  Johannesburg: "johannesburg",
+};
+
+const city =
+  cityKeyMap[selectedCity] ||
+  selectedCity ||
+  "bengaluru";
 
   // ============================================
   // AI PREDICTION
