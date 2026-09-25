@@ -337,21 +337,21 @@ const [aiError, setAiError] = useState("");
     setAiAnswer("");
 
     const response = await fetch(
-      `${API_BASE}/api/ai-assistant`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          question: aiQuestion,
-          location,
-          airQuality: air,
-          weather,
-          prediction,
-        }),
-      }
-    );
+  `${API_BASE}/api/ai-assistant`,
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      question: aiQuestion,
+      location,
+      airQuality: air,
+      weather,
+      prediction,
+    }),
+  }
+);
 
     if (!response.ok) {
       const errorData =

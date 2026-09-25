@@ -1628,10 +1628,18 @@ app.get("/api/reverse-geocode", async (req, res) => {
   address.state_district ||
   "";
 
-    let location = [place, state, country]
-      .filter(Boolean)
-      .join(", ");
+    const state =
+  address.state ||
+  address.state_district ||
+  "";
 
+const country =
+  address.country ||
+  "";
+
+let location = [place, state, country]
+  .filter(Boolean)
+  .join(", ");
     if (!location) {
       location =
         data.display_name ||
@@ -1654,6 +1662,13 @@ app.get("/api/reverse-geocode", async (req, res) => {
       longitude: Number(req.query.lon),
     });
   }
+});
+app.get("/health", (req, res) => {
+  res.json({
+    status: "healthy",
+    server: "BRICSense backend",
+    gemini: ai ? "configured" : "not configured",
+  });
 });
 // =====================================================
 // START SERVER
