@@ -6,7 +6,11 @@ import { useLocationData } from "../LocationContext";
 const API_BASE = "https://bricsair.onrender.com";
 
 function AIPrediction() {
-  const { location, selectedCity } = useLocationData();
+  const {
+  location,
+  selectedCity,
+  prediction: contextPrediction,
+} = useLocationData();
 
   const [prediction, setPrediction] = useState(null);
   const [forecast, setForecast] = useState([]);
@@ -37,44 +41,94 @@ const city =
   // AI PREDICTION
   // ============================================
   useEffect(() => {
-    async function loadPrediction() {
-      setLoadingPrediction(true);
+  async function loadPrediction() {
+    // If this is a searched location,
+    // LocationContext already loaded its prediction.
+    if (!selectedCity && contextPrediction) {
+      setPrediction(contextPrediction);
       setPredictionError("");
-
-      try {
-        const url =
-          `${API_BASE}/api/prediction?city=${encodeURIComponent(city)}`;
-
-        const response = await fetch(url);
-
-        if (!response.ok) {
-          throw new Error(
-            `Prediction API error: ${response.status}`
-          );
-        }
-
-        const data = await response.json();
-
-        setPrediction(data);
-      } catch (error) {
-        console.error(
-          "Prediction frontend error:",
-          error
-        );
-
-        setPredictionError(
-          error.message ||
-            "Unable to load AI prediction."
-        );
-      } finally {
-        setLoadingPrediction(false);
-      }
+      setLoadingPrediction(false);
+      return;
     }
 
-    loadPrediction();
-  }, [city]);
+    // If no searched-location prediction exists,
+    // load the selected BRICS city prediction.
+    if (!selectedCity) {
+      setPrediction(null);
+      setLoadingPrediction(false);
+      return;
+    }
 
-  // ============================================
+    setLoadingPrediction(true);
+    setPredictionError("");
+
+    try {
+      const cityKeyMap = {
+        bengaluru: "bengaluru",
+        Bengaluru: "bengaluru",
+
+        "sao-paulo": "sao-paulo",
+        "São Paulo": "sao-paulo",
+
+        moscow: "moscow",
+        Moscow: "moscow",
+
+        beijing: "beijing",
+        Beijing: "beijing",
+
+        johannesburg: "johannesburg",
+        Johannesburg: "johannesburg",
+      };
+
+      const city =
+        cityKeyMap[selectedCity] ||
+        selectedCity;
+
+      const url =
+        `${API_BASE}/api/prediction?city=${encodeURIComponent(
+          city
+        )}`;
+
+      console.log(
+        "BRICS city prediction request:",
+        url
+      );
+
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        const errorData =
+          await response.json().catch(() => ({}));
+
+        throw new Error(
+          errorData.error ||
+            `Prediction API error: ${response.status}`
+        );
+      }
+
+      const data = await response.json();
+
+      setPrediction(data);
+    } catch (error) {
+      console.error(
+        "Prediction frontend error:",
+        error
+      );
+
+      setPredictionError(
+        error.message ||
+          "Unable to load AI prediction."
+      );
+    } finally {
+      setLoadingPrediction(false);
+    }
+  }
+
+  loadPrediction();
+}, [
+  selectedCity,
+  contextPrediction,
+]);
   // FORECAST
   // ============================================
   useEffect(() => {

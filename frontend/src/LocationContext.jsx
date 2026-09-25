@@ -350,10 +350,52 @@ export function LocationProvider({ children }) {
 
       // Prediction is not requested for
       // arbitrary searched locations.
-      setPrediction(null);
+      // ----------------------------------------------
+// AI PREDICTION FOR SEARCHED LOCATION
+// ----------------------------------------------
+try {
+  const predictionUrl =
+    `${API_BASE}/api/prediction-location?lat=${latitude}&lon=${longitude}`;
 
-      setSelectedCity("");
-      setHasSelectedLocation(true);
+  console.log(
+    "Prediction request for searched location:",
+    predictionUrl
+  );
+
+  const predictionResponse =
+    await fetch(predictionUrl, {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+      },
+    });
+
+  if (!predictionResponse.ok) {
+    throw new Error(
+      `Prediction API returned ${predictionResponse.status}`
+    );
+  }
+
+  const predictionData =
+    await predictionResponse.json();
+
+  console.log(
+    "Searched location prediction:",
+    predictionData
+  );
+
+  setPrediction(predictionData);
+} catch (error) {
+  console.error(
+    "Prediction unavailable for searched location:",
+    error
+  );
+
+  setPrediction(null);
+}
+
+setSelectedCity("");
+setHasSelectedLocation(true);
 
       console.log(
         "Location search successful:",

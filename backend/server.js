@@ -869,8 +869,139 @@ app.get("/api/air-quality", async (req, res) => {
 // AI PREDICTION
 // =====================================================
 
-app.get("/api/prediction", async (req, res) => {
+app.get("/api/prediction-location", async (req, res) => {
   try {
+    const latitude = Number(req.query.lat);
+    const longitude = Number(req.query.lon);
+
+    if (
+      !Number.isFinite(latitude) ||
+      !Number.isFinite(longitude) ||
+      latitude < -90 ||
+      latitude > 90 ||
+      longitude < -180 ||
+      longitude > 180
+    ) {
+      return res.status(400).json({
+        error: "Invalid latitude or longitude",
+      });
+    }
+
+    const url =
+      `https://api.openweathermap.org/data/2.5/air_pollution` +
+      `?lat=${latitude}` +
+      `&lon=${longitude}` +
+      `&appid=${API_KEY}`;
+
+    const data = await openWeatherRequest(url);
+
+    const components =
+      data.list?.[0]?.components || {};
+
+    const pm25 = Number(components.pm2_5 || 0);
+    const pm10 = Number(components.pm10 || 0);
+    const co = Number(components.co || 0);
+    const no2 = Number(components.no2 || 0);
+    const so2 = Number(components.so2 || 0);
+    const o3 = Number(components.o3 || 0);
+
+    const scriptPath = path.join(
+      __dirname,
+      "..",
+      "ml",
+      "predict.py"
+    );
+
+    const python = spawn("python", [
+      scriptPath,
+      pm25,
+      pm10,
+      co,
+      no2,
+      so2,
+      o3,
+    ]);
+
+    let output = "";
+    let errorOutput = "";
+
+    python.stdout.on("data", (data) => {
+      output += data.toString();
+    });
+
+    python.stderr.on("data", (data) => {
+      errorOutput += data.toString();
+    });
+
+    python.on("error", (error) => {
+      console.error(
+        "Python prediction process error:",
+        error
+      );
+
+      if (!res.headersSent) {
+        res.status(500).json({
+          error: "Unable to start Python prediction",
+        });
+      }
+    });
+
+    python.on("close", (code) => {
+      if (code !== 0) {
+        console.error(
+          "Prediction error:",
+          errorOutput
+        );
+
+        if (!res.headersSent) {
+          return res.status(500).json({
+            error: "Prediction failed",
+          });
+        }
+
+        return;
+      }
+
+      try {
+        const prediction =
+          JSON.parse(output.trim());
+
+        res.json({
+          latitude,
+          longitude,
+          currentPM25: pm25,
+          predictedPM25:
+            prediction.predictedPM25,
+          status: prediction.status,
+          predictionTime: "Next Hour",
+          model: "Random Forest",
+        });
+      } catch (error) {
+        console.error(
+          "Prediction JSON error:",
+          error
+        );
+
+        if (!res.headersSent) {
+          res.status(500).json({
+            error:
+              "Invalid prediction result",
+          });
+        }
+      }
+    });
+  } catch (error) {
+    console.error(
+      "Location prediction error:",
+      error
+    );
+
+    res.status(500).json({
+      error: "Unable to generate prediction",
+    });
+  }
+});
+
     const cityKey = String(
       req.query.city || "bengaluru"
     ).toLowerCase();
