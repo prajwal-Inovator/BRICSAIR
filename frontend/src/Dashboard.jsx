@@ -99,9 +99,10 @@ function Dashboard() {
   const [predictionError, setPredictionError] =
     useState("");
 
-  const [aiAnswer, setAiAnswer] = useState("");
-  const [aiLoading, setAiLoading] = useState(false);
-  const [aiError, setAiError] = useState("");
+  const [aiQuestion, setAiQuestion] = useState("");
+const [aiAnswer, setAiAnswer] = useState("");
+const [aiLoading, setAiLoading] = useState(false);
+const [aiError, setAiError] = useState("");
 
   /*
    * --------------------------------------------------
@@ -326,58 +327,62 @@ function Dashboard() {
    */
 
   async function askAI() {
-    if (!location || !air) {
-      return;
-    }
-
-    try {
-      setAiLoading(true);
-      setAiError("");
-      setAiAnswer("");
-
-      const response = await fetch(
-        `${API_BASE}/api/ai-insight`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            location,
-            air,
-            weather,
-            prediction,
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(
-          "AI service unavailable"
-        );
-      }
-
-      const data = await response.json();
-
-      setAiAnswer(
-        data.answer ||
-          data.insight ||
-          data.message ||
-          "No AI insight available."
-      );
-    } catch (error) {
-      console.error(
-        "AI assistant error:",
-        error
-      );
-
-      setAiError(
-        "AI analysis is temporarily unavailable."
-      );
-    } finally {
-      setAiLoading(false);
-    }
+  if (!location || !air || !aiQuestion.trim()) {
+    return;
   }
+
+  try {
+    setAiLoading(true);
+    setAiError("");
+    setAiAnswer("");
+
+    const response = await fetch(
+      `${API_BASE}/api/ai-assistant`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          question: aiQuestion,
+          location,
+          airQuality: air,
+          weather,
+          prediction,
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const errorData =
+        await response.json().catch(() => ({}));
+
+      throw new Error(
+        errorData.error ||
+          "AI service unavailable"
+      );
+    }
+
+    const data = await response.json();
+
+    setAiAnswer(
+      data.answer ||
+        "No AI answer available."
+    );
+  } catch (error) {
+    console.error(
+      "AI assistant error:",
+      error
+    );
+
+    setAiError(
+      error.message ||
+        "AI analysis is temporarily unavailable. Please try again."
+    );
+  } finally {
+    setAiLoading(false);
+  }
+}
 
   /*
    * --------------------------------------------------
@@ -1263,60 +1268,58 @@ function Dashboard() {
           {/* AI ASSISTANT */}
 
           <div className="dashboard-smart-card">
+  <div className="smart-card-icon">🧠</div>
 
-            <div className="smart-card-icon">
-              🧠
-            </div>
+  <h3>AI Environmental Assistant</h3>
 
-            <h3>
-              AI Environmental Assistant
-            </h3>
+  <p>
+    Ask questions about air quality, pollution,
+    weather, PM2.5 and environmental conditions.
+  </p>
 
-            <p>
-              Get an AI-generated explanation of the current
-              environmental conditions.
-            </p>
+  <div className="dashboard-ai-box">
 
-            <div className="dashboard-ai-box">
+    <textarea
+      value={aiQuestion}
+      onChange={(e) =>
+        setAiQuestion(e.target.value)
+      }
+      placeholder="Ask a question about the environment..."
+      rows="3"
+    />
 
-              <button
-                onClick={askAI}
-                disabled={
-                  aiLoading ||
-                  !location ||
-                  !air
-                }
-              >
-                {aiLoading
-                  ? "Analyzing..."
-                  : "✨ Analyze Current Conditions"}
-              </button>
+    <button
+      onClick={askAI}
+      disabled={
+        aiLoading ||
+        !location ||
+        !air ||
+        !aiQuestion.trim()
+      }
+    >
+      {aiLoading
+        ? "🤖 Thinking..."
+        : "✨ Ask AI"}
+    </button>
 
-              {aiError && (
-                <div className="ai-error">
-                  {aiError}
-                </div>
-              )}
+    {aiError && (
+      <div className="ai-error">
+        {aiError}
+      </div>
+    )}
 
-              {aiAnswer && (
-                <div className="ai-answer">
+    {aiAnswer && (
+      <div className="ai-answer">
+        <div className="ai-answer-title">
+          🤖 <strong>AI Answer</strong>
+        </div>
 
-                  <div className="ai-answer-title">
+        <div className="ai-answer-text">
+          {aiAnswer}
+        </div>
+      </div>
+    )}
 
-                    🤖
-
-                    <strong>
-                      AI Analysis
-                    </strong>
-
-                  </div>
-
-                  <div className="ai-answer-text">
-                    {aiAnswer}
-                  </div>
-
-                </div>
-              )}
 
             </div>
 
