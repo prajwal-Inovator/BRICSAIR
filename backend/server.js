@@ -869,6 +869,10 @@ app.get("/api/air-quality", async (req, res) => {
 // AI PREDICTION
 // =====================================================
 
+// ===============================
+// AI PREDICTION FOR SEARCHED LOCATION
+// ===============================
+
 app.get("/api/prediction-location", async (req, res) => {
   try {
     const latitude = Number(req.query.lat);
@@ -996,12 +1000,21 @@ app.get("/api/prediction-location", async (req, res) => {
       error
     );
 
-    res.status(500).json({
-      error: "Unable to generate prediction",
-    });
+    if (!res.headersSent) {
+      res.status(500).json({
+        error: "Unable to generate prediction",
+      });
+    }
   }
 });
 
+
+// ===============================
+// AI PREDICTION FOR BRICS CITY
+// ===============================
+
+app.get("/api/prediction", async (req, res) => {
+  try {
     const cityKey = String(
       req.query.city || "bengaluru"
     ).toLowerCase();
@@ -1088,8 +1101,8 @@ app.get("/api/prediction-location", async (req, res) => {
 
       if (!res.headersSent) {
         res.status(500).json({
-          error: "Unable to start Python prediction",
-          
+          error:
+            "Unable to start Python prediction",
         });
       }
     });
@@ -1104,7 +1117,6 @@ app.get("/api/prediction-location", async (req, res) => {
         if (!res.headersSent) {
           return res.status(500).json({
             error: "Prediction failed",
-            details: errorOutput,
           });
         }
 
@@ -1126,10 +1138,17 @@ app.get("/api/prediction-location", async (req, res) => {
           model: "Random Forest",
         });
       } catch (error) {
-        res.status(500).json({
-          error:
-            "Invalid prediction result",
-        });
+        console.error(
+          "Prediction JSON error:",
+          error
+        );
+
+        if (!res.headersSent) {
+          res.status(500).json({
+            error:
+              "Invalid prediction result",
+          });
+        }
       }
     });
   } catch (error) {
@@ -1138,14 +1157,14 @@ app.get("/api/prediction-location", async (req, res) => {
       error
     );
 
-    res.status(500).json({
-      error:
-        "Unable to generate prediction",
-      
-    });
+    if (!res.headersSent) {
+      res.status(500).json({
+        error:
+          "Unable to generate prediction",
+      });
+    }
   }
 });
-
 // =====================================================
 // LOCATION DASHBOARD
 // =====================================================
