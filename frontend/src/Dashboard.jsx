@@ -116,11 +116,8 @@ const [aiError, setAiError] = useState("");
   let cancelled = false;
 
   async function loadDashboardPrediction() {
-    // ============================================
-    // 1. USE PREDICTION FROM LOCATION CONTEXT
-    // ============================================
-    // This handles searched locations such as:
-    // Mysuru, Mandya, Tumakuru, etc.
+    // 1. Use prediction already loaded by LocationContext
+    // This is used for searched locations such as Mysuru.
     if (contextPrediction) {
       console.log(
         "DASHBOARD USING CONTEXT PREDICTION:",
@@ -136,9 +133,7 @@ const [aiError, setAiError] = useState("");
       return;
     }
 
-    // ============================================
-    // 2. NO SELECTED CITY AND NO PREDICTION
-    // ============================================
+    // 2. No BRICS city selected and no prediction available
     if (!selectedCity) {
       if (!cancelled) {
         setPrediction(null);
@@ -149,9 +144,7 @@ const [aiError, setAiError] = useState("");
       return;
     }
 
-    // ============================================
-    // 3. LOAD PREDICTION FOR BRICS CITY
-    // ============================================
+    // 3. Load prediction for BRICS cities
     try {
       if (!cancelled) {
         setPredictionLoading(true);
@@ -1067,8 +1060,7 @@ const [aiError, setAiError] = useState("");
                   </span>
 
                   <strong>
-                    {prediction.currentPM25 ??
-                      pm25}
+                    {pm25}
                   </strong>
 
                   <small>

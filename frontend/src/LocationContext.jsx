@@ -13,14 +13,16 @@ const DEFAULT_LOCATION = {
 };
 
 export function LocationProvider({ children }) {
-  const [location, setLocation] = useState(DEFAULT_LOCATION);
+  const [location, setLocation] =
+    useState(DEFAULT_LOCATION);
 
   const [air, setAir] = useState(null);
   const [weather, setWeather] = useState(null);
   const [prediction, setPrediction] = useState(null);
   const [forecast, setForecast] = useState([]);
 
-  const [selectedCity, setSelectedCity] = useState("bengaluru");
+  const [selectedCity, setSelectedCity] =
+    useState("bengaluru");
 
   const [hasSelectedLocation, setHasSelectedLocation] =
     useState(false);
@@ -50,7 +52,11 @@ export function LocationProvider({ children }) {
 
       setForecast(data.forecast || []);
     } catch (error) {
-      console.error("Forecast unavailable:", error);
+      console.error(
+        "Forecast unavailable:",
+        error
+      );
+
       setForecast([]);
     }
   }
@@ -60,7 +66,10 @@ export function LocationProvider({ children }) {
   // --------------------------------------------------
   async function loadCity(cityKey) {
     try {
-      console.log("Loading city:", cityKey);
+      console.log(
+        "Loading city:",
+        cityKey
+      );
 
       // ----------------------------------------------
       // AIR QUALITY
@@ -83,9 +92,13 @@ export function LocationProvider({ children }) {
         );
       }
 
-      const airData = await airResponse.json();
+      const airData =
+        await airResponse.json();
 
-      console.log("Air quality response:", airData);
+      console.log(
+        "Air quality response:",
+        airData
+      );
 
       const latitude =
         Number(airData.latitude) ||
@@ -106,12 +119,16 @@ export function LocationProvider({ children }) {
       // SAVE LOCATION
       // ----------------------------------------------
       setLocation({
-        name: airData.city || cityKey,
+        name:
+          airData.city ||
+          cityKey,
         state:
           cityKey === "bengaluru"
             ? "Karnataka"
             : "",
-        country: airData.country || "",
+        country:
+          airData.country ||
+          "",
         latitude,
         longitude,
       });
@@ -122,21 +139,25 @@ export function LocationProvider({ children }) {
       // ----------------------------------------------
       // FORECAST
       // ----------------------------------------------
-      await loadForecast(latitude, longitude);
+      await loadForecast(
+        latitude,
+        longitude
+      );
 
       // ----------------------------------------------
       // WEATHER
       // ----------------------------------------------
       try {
-        const weatherResponse = await fetch(
-          `${API_BASE}/api/weather?lat=${latitude}&lon=${longitude}`,
-          {
-            method: "GET",
-            headers: {
-              Accept: "application/json",
-            },
-          }
-        );
+        const weatherResponse =
+          await fetch(
+            `${API_BASE}/api/weather?lat=${latitude}&lon=${longitude}`,
+            {
+              method: "GET",
+              headers: {
+                Accept: "application/json",
+              },
+            }
+          );
 
         if (weatherResponse.ok) {
           const weatherData =
@@ -175,12 +196,16 @@ export function LocationProvider({ children }) {
         );
 
         const predictionResponse =
-          await fetch(predictionUrl, {
-            method: "GET",
-            headers: {
-              Accept: "application/json",
-            },
-          });
+          await fetch(
+            predictionUrl,
+            {
+              method: "GET",
+              headers: {
+                Accept:
+                  "application/json",
+              },
+            }
+          );
 
         if (!predictionResponse.ok) {
           throw new Error(
@@ -196,7 +221,13 @@ export function LocationProvider({ children }) {
           predictionData
         );
 
-        setPrediction(predictionData);
+        // Use the SAME live PM2.5 value
+        // shown in Live Air Quality.
+        setPrediction({
+          ...predictionData,
+          currentPM25:
+            Number(airData.pm25 ?? 0),
+        });
       } catch (error) {
         console.error(
           "Prediction unavailable:",
@@ -223,23 +254,30 @@ export function LocationProvider({ children }) {
   // --------------------------------------------------
   // SEARCH LOCATION
   // --------------------------------------------------
-  async function searchLocation(searchText) {
+  async function searchLocation(
+    searchText
+  ) {
     if (!searchText.trim()) {
       return;
     }
 
     try {
-      const response = await fetch(
-        `${API_BASE}/api/search-location?q=${encodeURIComponent(
-          searchText
-        )}`,
-        {
-          method: "GET",
-          headers: {
-            Accept: "application/json",
-          },
-        }
-      );
+      // ----------------------------------------------
+      // SEARCH LOCATION
+      // ----------------------------------------------
+      const response =
+        await fetch(
+          `${API_BASE}/api/search-location?q=${encodeURIComponent(
+            searchText
+          )}`,
+          {
+            method: "GET",
+            headers: {
+              Accept:
+                "application/json",
+            },
+          }
+        );
 
       if (!response.ok) {
         throw new Error(
@@ -247,24 +285,33 @@ export function LocationProvider({ children }) {
         );
       }
 
-      const data = await response.json();
+      const data =
+        await response.json();
 
       if (
         !data.locations ||
         data.locations.length === 0
       ) {
-        throw new Error("Location not found");
+        throw new Error(
+          "Location not found"
+        );
       }
 
-      const result = data.locations[0];
+      const result =
+        data.locations[0];
 
-      const latitude = Number(result.latitude);
-      const longitude = Number(result.longitude);
+      const latitude =
+        Number(result.latitude);
+
+      const longitude =
+        Number(result.longitude);
 
       const locationData = {
         name: result.name,
-        state: result.state || "",
-        country: result.country || "India",
+        state:
+          result.state || "",
+        country:
+          result.country || "India",
         latitude,
         longitude,
       };
@@ -272,20 +319,24 @@ export function LocationProvider({ children }) {
       // ----------------------------------------------
       // SAVE LOCATION
       // ----------------------------------------------
-      setLocation(locationData);
+      setLocation(
+        locationData
+      );
 
       // ----------------------------------------------
       // AIR QUALITY
       // ----------------------------------------------
-      const airResponse = await fetch(
-        `${API_BASE}/api/air-quality-location?lat=${latitude}&lon=${longitude}`,
-        {
-          method: "GET",
-          headers: {
-            Accept: "application/json",
-          },
-        }
-      );
+      const airResponse =
+        await fetch(
+          `${API_BASE}/api/air-quality-location?lat=${latitude}&lon=${longitude}`,
+          {
+            method: "GET",
+            headers: {
+              Accept:
+                "application/json",
+            },
+          }
+        );
 
       if (!airResponse.ok) {
         throw new Error(
@@ -293,11 +344,14 @@ export function LocationProvider({ children }) {
         );
       }
 
-      const airData = await airResponse.json();
+      const airData =
+        await airResponse.json();
 
-      setAir({
+      const locationAirData = {
         ...airData,
+
         city: result.name,
+
         hotspots: [
           {
             name: result.name,
@@ -307,7 +361,11 @@ export function LocationProvider({ children }) {
             pm10: airData.pm10,
           },
         ],
-      });
+      };
+
+      setAir(
+        locationAirData
+      );
 
       // ----------------------------------------------
       // FORECAST
@@ -321,21 +379,25 @@ export function LocationProvider({ children }) {
       // WEATHER
       // ----------------------------------------------
       try {
-        const weatherResponse = await fetch(
-          `${API_BASE}/api/weather?lat=${latitude}&lon=${longitude}`,
-          {
-            method: "GET",
-            headers: {
-              Accept: "application/json",
-            },
-          }
-        );
+        const weatherResponse =
+          await fetch(
+            `${API_BASE}/api/weather?lat=${latitude}&lon=${longitude}`,
+            {
+              method: "GET",
+              headers: {
+                Accept:
+                  "application/json",
+              },
+            }
+          );
 
         if (weatherResponse.ok) {
           const weatherData =
             await weatherResponse.json();
 
-          setWeather(weatherData);
+          setWeather(
+            weatherData
+          );
         } else {
           setWeather(null);
         }
@@ -348,54 +410,85 @@ export function LocationProvider({ children }) {
         setWeather(null);
       }
 
-      // Prediction is not requested for
-      // arbitrary searched locations.
       // ----------------------------------------------
-// AI PREDICTION FOR SEARCHED LOCATION
-// ----------------------------------------------
-try {
-  const predictionUrl =
-    `${API_BASE}/api/prediction-location?lat=${latitude}&lon=${longitude}`;
+      // AI PREDICTION FOR SEARCHED LOCATION
+      // ----------------------------------------------
+      try {
+        const predictionUrl =
+  `${API_BASE}/api/prediction-location` +
+  `?lat=${latitude}` +
+  `&lon=${longitude}` +
+  `&pm25=${encodeURIComponent(
+    airData.pm25 ?? 0
+  )}` +
+  `&pm10=${encodeURIComponent(
+    airData.pm10 ?? 0
+  )}` +
+  `&co=${encodeURIComponent(
+    airData.co ?? 0
+  )}` +
+  `&no2=${encodeURIComponent(
+    airData.no2 ?? 0
+  )}` +
+  `&so2=${encodeURIComponent(
+    airData.so2 ?? 0
+  )}` +
+  `&o3=${encodeURIComponent(
+    airData.o3 ?? 0
+  )}`;
 
-  console.log(
-    "Prediction request for searched location:",
-    predictionUrl
-  );
+        console.log(
+          "Prediction request for searched location:",
+          predictionUrl
+        );
 
-  const predictionResponse =
-    await fetch(predictionUrl, {
-      method: "GET",
-      headers: {
-        Accept: "application/json",
-      },
-    });
+        const predictionResponse =
+          await fetch(
+            predictionUrl,
+            {
+              method: "GET",
+              headers: {
+                Accept:
+                  "application/json",
+              },
+            }
+          );
 
-  if (!predictionResponse.ok) {
-    throw new Error(
-      `Prediction API returned ${predictionResponse.status}`
-    );
-  }
+        if (!predictionResponse.ok) {
+          throw new Error(
+            `Prediction API returned ${predictionResponse.status}`
+          );
+        }
 
-  const predictionData =
-    await predictionResponse.json();
+        const predictionData =
+          await predictionResponse.json();
 
-  console.log(
-    "Searched location prediction:",
-    predictionData
-  );
+        console.log(
+          "Searched location prediction:",
+          predictionData
+        );
 
-  setPrediction(predictionData);
-} catch (error) {
-  console.error(
-    "Prediction unavailable for searched location:",
-    error
-  );
+        // Always use the SAME live PM2.5
+        // shown in Live Air Quality.
+        setPrediction({
+          ...predictionData,
+          currentPM25:
+            Number(airData.pm25 ?? 0),
+        });
+      } catch (error) {
+        console.error(
+          "Prediction unavailable for searched location:",
+          error
+        );
 
-  setPrediction(null);
-}
+        setPrediction(null);
+      }
 
-setSelectedCity("");
-setHasSelectedLocation(true);
+      // ----------------------------------------------
+      // SEARCHED LOCATION IS NOT A BRICS CITY
+      // ----------------------------------------------
+      setSelectedCity("");
+      setHasSelectedLocation(true);
 
       console.log(
         "Location search successful:",
@@ -451,5 +544,7 @@ setHasSelectedLocation(true);
 // CUSTOM HOOK
 // --------------------------------------------------
 export function useLocationData() {
-  return useContext(LocationContext);
+  return useContext(
+    LocationContext
+  );
 }
