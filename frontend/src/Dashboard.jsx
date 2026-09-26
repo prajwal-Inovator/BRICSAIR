@@ -113,81 +113,110 @@ const [aiError, setAiError] = useState("");
    */
 
   useEffect(() => {
-    let cancelled = false;
+  let cancelled = false;
 
-    async function loadDashboardPrediction() {
-      /*
-       * Prediction API needs a BRICS city key.
-       *
-       * For a searched Indian location there may be
-       * no selectedCity, so we don't request a city
-       * prediction in that case.
-       */
+  async function loadDashboardPrediction() {
+    // ============================================
+    // 1. USE PREDICTION FROM LOCATION CONTEXT
+    // ============================================
+    // This handles searched locations such as:
+    // Mysuru, Mandya, Tumakuru, etc.
+    if (contextPrediction) {
+      console.log(
+        "DASHBOARD USING CONTEXT PREDICTION:",
+        contextPrediction
+      );
 
-      if (!selectedCity) {
-        if (!cancelled) {
-          setPrediction(null);
-          setPredictionError("");
-          setPredictionLoading(false);
-        }
-
-        return;
+      if (!cancelled) {
+        setPrediction(contextPrediction);
+        setPredictionError("");
+        setPredictionLoading(false);
       }
 
-      try {
-        if (!cancelled) {
-          setPredictionLoading(true);
-          setPredictionError("");
-          setPrediction(null);
-        }
-
-        const response = await fetch(
-          `${API_BASE}/api/prediction?city=${encodeURIComponent(
-            selectedCity
-          )}`
-        );
-
-        if (!response.ok) {
-          throw new Error(
-            `Prediction API returned ${response.status}`
-          );
-        }
-
-        const data = await response.json();
-
-        console.log(
-          "DASHBOARD PREDICTION:",
-          data
-        );
-
-        if (!cancelled) {
-          setPrediction(data);
-        }
-      } catch (error) {
-        console.error(
-          "Dashboard prediction error:",
-          error
-        );
-
-        if (!cancelled) {
-          setPrediction(null);
-          setPredictionError(
-            "AI prediction is temporarily unavailable."
-          );
-        }
-      } finally {
-        if (!cancelled) {
-          setPredictionLoading(false);
-        }
-      }
+      return;
     }
 
-    loadDashboardPrediction();
+    // ============================================
+    // 2. NO SELECTED CITY AND NO PREDICTION
+    // ============================================
+    if (!selectedCity) {
+      if (!cancelled) {
+        setPrediction(null);
+        setPredictionError("");
+        setPredictionLoading(false);
+      }
 
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedCity]);
+      return;
+    }
+
+    // ============================================
+    // 3. LOAD PREDICTION FOR BRICS CITY
+    // ============================================
+    try {
+      if (!cancelled) {
+        setPredictionLoading(true);
+        setPredictionError("");
+        setPrediction(null);
+      }
+
+      const response = await fetch(
+        `${API_BASE}/api/prediction?city=${encodeURIComponent(
+          selectedCity
+        )}`,
+        {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const errorData =
+          await response.json().catch(() => ({}));
+
+        throw new Error(
+          errorData.error ||
+            `Prediction API returned ${response.status}`
+        );
+      }
+
+      const data = await response.json();
+
+      console.log(
+        "DASHBOARD BRICS PREDICTION:",
+        data
+      );
+
+      if (!cancelled) {
+        setPrediction(data);
+        setPredictionError("");
+      }
+    } catch (error) {
+      console.error(
+        "Dashboard prediction error:",
+        error
+      );
+
+      if (!cancelled) {
+        setPrediction(null);
+        setPredictionError(
+          "AI prediction is temporarily unavailable."
+        );
+      }
+    } finally {
+      if (!cancelled) {
+        setPredictionLoading(false);
+      }
+    }
+  }
+
+  loadDashboardPrediction();
+
+  return () => {
+    cancelled = true;
+  };
+}, [selectedCity, contextPrediction]);
 
   /*
    * --------------------------------------------------
