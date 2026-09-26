@@ -873,6 +873,10 @@ app.get("/api/air-quality", async (req, res) => {
 // AI PREDICTION FOR SEARCHED LOCATION
 // ===============================
 
+// ===============================
+// AI PREDICTION FOR SEARCHED LOCATION
+// ===============================
+
 app.get("/api/prediction-location", async (req, res) => {
   try {
     const latitude = Number(req.query.lat);
@@ -891,23 +895,133 @@ app.get("/api/prediction-location", async (req, res) => {
       });
     }
 
-    const url =
-      `https://api.openweathermap.org/data/2.5/air_pollution` +
-      `?lat=${latitude}` +
-      `&lon=${longitude}` +
-      `&appid=${API_KEY}`;
+    // -------------------------------------------------
+    // USE POLLUTANT VALUES PROVIDED BY FRONTEND
+    // WHEN AVAILABLE.
+    //
+    // This makes AI Prediction use exactly the same
+    // live air-quality data shown on the dashboard.
+    // -------------------------------------------------
 
-    const data = await openWeatherRequest(url);
+    const hasProvidedPollutants =
+      req.query.pm25 !== undefined ||
+      req.query.pm10 !== undefined ||
+      req.query.co !== undefined ||
+      req.query.no2 !== undefined ||
+      req.query.so2 !== undefined ||
+      req.query.o3 !== undefined;
 
-    const components =
-      data.list?.[0]?.components || {};
+    let pm25;
+    let pm10;
+    let co;
+    let no2;
+    let so2;
+    let o3;
 
-    const pm25 = Number(components.pm2_5 || 0);
-    const pm10 = Number(components.pm10 || 0);
-    const co = Number(components.co || 0);
-    const no2 = Number(components.no2 || 0);
-    const so2 = Number(components.so2 || 0);
-    const o3 = Number(components.o3 || 0);
+    if (hasProvidedPollutants) {
+      pm25 = Number(req.query.pm25 || 0);
+      pm10 = Number(req.query.pm10 || 0);
+      co = Number(req.query.co || 0);
+      no2 = Number(req.query.no2 || 0);
+      so2 = Number(req.query.so2 || 0);
+      o3 = Number(req.query.o3 || 0);
+
+      console.log(
+        "Using LIVE AIR QUALITY values for prediction:",
+        {
+          pm25,
+          pm10,
+          co,
+          no2,
+          so2,
+          o3,
+        }
+      );
+    } else {
+      // -------------------------------------------------
+      // FALLBACK:
+      // If pollutant values were not supplied, get them
+      // directly from OpenWeather.
+      // -------------------------------------------------
+
+      const url =
+        `https://api.openweathermap.org/data/2.5/air_pollution` +
+        `?lat=${latitude}` +
+        `&lon=${longitude}` +
+        `&appid=${API_KEY}`;
+
+      const data =
+        await openWeatherRequest(url);
+
+      const components =
+        data.list?.[0]?.components || {};
+
+      pm25 = Number(
+        components.pm2_5 || 0
+      );
+
+      pm10 = Number(
+        components.pm10 || 0
+      );
+
+      co = Number(
+        components.co || 0
+      );
+
+      no2 = Number(
+        components.no2 || 0
+      );
+
+      so2 = Number(
+        components.so2 || 0
+      );
+
+      o3 = Number(
+        components.o3 || 0
+      );
+
+      console.log(
+        "Using OpenWeather values for prediction:",
+        {
+          pm25,
+          pm10,
+          co,
+          no2,
+          so2,
+          o3,
+        }
+      );
+    }
+
+    // -------------------------------------------------
+    // VALIDATE POLLUTANT VALUES
+    // -------------------------------------------------
+
+    const pollutantValues = [
+      pm25,
+      pm10,
+      co,
+      no2,
+      so2,
+      o3,
+    ];
+
+    if (
+      pollutantValues.some(
+        (value) =>
+          !Number.isFinite(value) ||
+          value < 0
+      )
+    ) {
+      return res.status(400).json({
+        error:
+          "Invalid pollutant values supplied for prediction",
+      });
+    }
+
+    // -------------------------------------------------
+    // RUN RANDOM FOREST MODEL
+    // -------------------------------------------------
 
     const scriptPath = path.join(
       __dirname,
@@ -945,7 +1059,8 @@ app.get("/api/prediction-location", async (req, res) => {
 
       if (!res.headersSent) {
         res.status(500).json({
-          error: "Unable to start Python prediction",
+          error:
+            "Unable to start Python prediction",
         });
       }
     });
@@ -970,15 +1085,31 @@ app.get("/api/prediction-location", async (req, res) => {
         const prediction =
           JSON.parse(output.trim());
 
+        console.log(
+          "Random Forest prediction:",
+          prediction
+        );
+
         res.json({
           latitude,
           longitude,
+
+          // IMPORTANT:
+          // This is exactly the same PM2.5
+          // value used by the model.
           currentPM25: pm25,
+
           predictedPM25:
             prediction.predictedPM25,
-          status: prediction.status,
-          predictionTime: "Next Hour",
-          model: "Random Forest",
+
+          status:
+            prediction.status,
+
+          predictionTime:
+            "Next Hour",
+
+          model:
+            "Random Forest",
         });
       } catch (error) {
         console.error(
@@ -1002,12 +1133,12 @@ app.get("/api/prediction-location", async (req, res) => {
 
     if (!res.headersSent) {
       res.status(500).json({
-        error: "Unable to generate prediction",
+        error:
+          "Unable to generate prediction",
       });
     }
   }
 });
-
 
 // ===============================
 // AI PREDICTION FOR BRICS CITY
