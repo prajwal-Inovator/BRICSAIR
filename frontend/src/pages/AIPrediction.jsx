@@ -40,25 +40,45 @@ const city =
   // ============================================
   // AI PREDICTION
   // ============================================
-  useEffect(() => {
+  // ============================================
+// AI PREDICTION
+// ============================================
+useEffect(() => {
   async function loadPrediction() {
-    // If this is a searched location,
-    // LocationContext already loaded its prediction.
-    if (!selectedCity && contextPrediction) {
+    // ------------------------------------------------
+    // 1. USE PREDICTION ALREADY LOADED BY LOCATION
+    // ------------------------------------------------
+    // This handles cities searched from the search bar.
+    if (contextPrediction) {
+      console.log(
+        "Using prediction from LocationContext:",
+        contextPrediction
+      );
+
       setPrediction(contextPrediction);
       setPredictionError("");
       setLoadingPrediction(false);
+
       return;
     }
 
-    // If no searched-location prediction exists,
-    // load the selected BRICS city prediction.
+    // ------------------------------------------------
+    // 2. NO CITY SELECTED
+    // ------------------------------------------------
     if (!selectedCity) {
+      console.log(
+        "No selected city and no context prediction."
+      );
+
       setPrediction(null);
       setLoadingPrediction(false);
+
       return;
     }
 
+    // ------------------------------------------------
+    // 3. LOAD PREDICTION FOR BRICS CITY
+    // ------------------------------------------------
     setLoadingPrediction(true);
     setPredictionError("");
 
@@ -80,13 +100,13 @@ const city =
         Johannesburg: "johannesburg",
       };
 
-      const city =
+      const cityKey =
         cityKeyMap[selectedCity] ||
         selectedCity;
 
       const url =
         `${API_BASE}/api/prediction?city=${encodeURIComponent(
-          city
+          cityKey
         )}`;
 
       console.log(
@@ -94,7 +114,12 @@ const city =
         url
       );
 
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+        },
+      });
 
       if (!response.ok) {
         const errorData =
@@ -108,12 +133,20 @@ const city =
 
       const data = await response.json();
 
+      console.log(
+        "BRICS city prediction response:",
+        data
+      );
+
       setPrediction(data);
+      setPredictionError("");
     } catch (error) {
       console.error(
         "Prediction frontend error:",
         error
       );
+
+      setPrediction(null);
 
       setPredictionError(
         error.message ||
